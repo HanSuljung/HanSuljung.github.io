@@ -32,3 +32,50 @@ t={1:'a',2:'b'}
 for x,y in dict.items(t):
     print(x,y)
     time.sleep(1)
+
+
+# 题目10：暂停一秒输出，并格式化当前时间。
+# 程序分析：无
+
+import time
+
+print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
+
+#time() 返回当前时间的时间戳（1970纪元后经过的浮点秒数）
+# 用法  time.time()
+
+time.sleep(1)
+ 
+print(time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time())))
+
+
+# 题目11：古典问题：有一对兔子，从出生后第3个月起每个月都生一对兔子，小兔子长到第三个月后每个月又生一对兔子，假如兔子都不死，
+# 问每个月的兔子总数为多少？
+
+# 程序分析：兔子的规律为数列1,1,2,3,5,8,13,21..f(n)=f(n-1)+f(n-2)
+
+n=int(input("Enter the number of the month: "))
+nums_rabbit=[1,1]
+
+if n==1 or n==2:
+    
+    nums=2
+    
+    print('the {}th month,the number of the rabbits is {}'.format(n,nums))
+    
+elif n==0:
+    
+    print('the number of the rabbits is erro')
+      
+elif n>2:
+    
+    print("the 1st month,the number of the rabbits is 2")
+    print("the 2nd month,the number of the rabbits is 2")
+    
+    for i in range(2,n):
+        nums_rabbit.append(nums_rabbit[i-1]+nums_rabbit[i-2])
+        
+        if i==2:
+            print("the {}rd month,the number of the rabbits is {}".format(i+1,nums_rabbit[i]*2))
+        else:
+            print('the {}th month,the number of the rabbits is {}'.format(i+1,nums_rabbit[i]*2))
