@@ -269,5 +269,11 @@ nums_3=nums-nums_2
 
 print('{}\n{}个素数'.format(nums_3,len(nums_3)))
                   
+#利用lambda生成器更简单
 
-    
+L = list(filter(lambda x: x not in set([i for i in range(101,201) for j in range(2,i) if not i%j]), range(101,201)))
+print('一共有{}个素数，这些素数分别是：{}'.format(len(L),L))
+                  
+                  
+                  
+                  
