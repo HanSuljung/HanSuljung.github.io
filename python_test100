@@ -275,5 +275,30 @@ L = list(filter(lambda x: x not in set([i for i in range(101,201) for j in range
 print('一共有{}个素数，这些素数分别是：{}'.format(len(L),L))
                   
                   
-                  
+##题目13： 请大家编写一个程序, 重复让用户输入数字； 直到用户输入’i wanna stop’，停止并返回之前数字的个数与总和。
+
+nums = []
+sum_nums = 0
+
+while True:
+    user_input = input('Please input a number: ')
+    
+    
+    if (user_input != 'I wanna stop') :
+        
+        nums.append(user_input)
+        
+    else:
+        
+        for i in range(len(nums)):
+            sum_nums = sum_nums + int(nums[i])
+#             print(i,nums[i],sum_nums)
+
+        break
+        
+print('There are {} numbers and the sum is:{} '.format(len(nums),sum_nums))   
+        
+print('the program is over.')
+
+                 
                   
