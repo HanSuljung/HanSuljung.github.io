@@ -292,7 +292,7 @@ print(bool(None))
 print(bool(10 < 2))
 
 
-# In[ ]:
+
 
 
 
