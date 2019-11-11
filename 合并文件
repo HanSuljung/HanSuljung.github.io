@@ -1,0 +1,61 @@
+# -*- coding:utf-8*-
+import sys
+import  pandas as pd
+import os
+import os.path
+import time
+time1=time.time()
+
+
+
+
+# 使用os模块walk函数，搜索出某目录下的全部excel文件
+######################获取同一个文件夹下的所有excel文件名#######################
+def getFileName(filepath):
+    file_list = []
+    for root,dirs,files in os.walk(filepath):
+        for filespath in files:
+            print(os.path.join(root,filespath))
+            file_list.append(os.path.join(root,filespath))
+
+    return file_list
+
+
+
+def MergeExcel(filepath,outfile):
+    file_list=getFileName(filepath)
+    result=pd.DataFrame()
+    ########################合并多个excel文件###########
+    print (len(file_list))
+    for each in file_list:
+        #####################读取xlsx格式文件###############
+        data1=pd.read_excel(each,sheet_name=0)    #sheet_name需修改成指定sheet名，否则默认为sheet1
+#         print (data1)
+        result=result.append(data1)
+
+    #############写出数据xlsx格式#######################
+    writer = pd.ExcelWriter(filepath+outfile, engine='xlsxwriter', options={'strings_to_urls': False})
+    result.to_excel(writer, index=False)
+    writer.close()
+
+    #########################写出数据csv格式#########################################
+    # pd.DataFrame.to_csv(result, filepath+outfile, header=True, encoding='gbk', index=False)
+
+    print ("finished")
+
+
+if __name__ == '__main__':
+
+    filepath='E:/日常数据/月会资料/2019年10月月会资料/曝光/美团/'
+    
+    #需更改path地址
+
+    ##################指定写出数据格式################
+    # outfile1='result.csv'
+    # MergeExcel(filepath, outfile1)
+
+
+    outfile2 = 'result.xlsx'
+    MergeExcel(filepath, outfile2)
+    time2 = time.time()
+    print (u'总共耗时：' + str(time2 - time1) + 's')
