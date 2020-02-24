@@ -1,0 +1,111 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*
+
+import pandas as pd
+import os
+import numpy as np
+
+
+def ELM(Efile_dir):
+    
+    Enew_filename = Efile_dir + '/E_result.xlsx'
+
+    Efile_list = os.listdir(Efile_dir)
+    print("文件夹中有{}个文件".format(len(Efile_list)))
+    print('-'*100) 
+
+    E_list=[]
+    E = 0
+
+    for file in Efile_list:
+        file_path = os.path.join(Efile_dir,file)
+        print(file_path)
+
+        df_e = pd.read_excel(file_path,sheet_name='门店数据')
+        df_e['地区'] = Efile_list[E]
+#         print(df_e.head())
+        E = E + 1
+        E_list.append(df_e)
+
+    df_E = pd.concat(E_list)
+    df_E['地区']=df_E['地区'].str.strip('.xlsx')
+    df_E['平台']='饿了么'
+    df_E = pd.DataFrame(df_E[['门店名称','地区','平台','曝光人数','进店人数','下单人数']])
+    df_E.to_excel(Enew_filename,index = False)
+    print('饿了么数据处理完毕！')
+    print('-'*100)
+    
+ #-------------------------------------------------------------------------------------------------------------   
+    
+def JD(file_dir):
+    
+    new_filename = file_dir + '/JD_result.xlsx'
+
+    file_list = os.listdir(file_dir)
+    print("文件夹中有{}个文件".format(len(file_list)))
+    print('-'*100) 
+
+    new_list=[]
+    n = 0
+
+    for file in file_list:
+        file_path = os.path.join(file_dir,file)
+        print(file_path)
+
+        df_jd = pd.read_excel(file_path,sheet_name=0)
+        df_jd['地区'] = file_list[n]
+        n = n + 1
+        new_list.append(df_jd)
+
+    df_jd = pd.concat(new_list)
+    df_jd['地区']=df_jd['地区'].str.strip('.xlsx')
+    df_jd['平台']='京东到家'
+    df_jd.rename(columns = {'浏览量':'曝光人数','访客数':'进店人数','有效订单数':'下单人数'},inplace = True)      
+    df_jd = pd.DataFrame(df_jd[['门店名称','地区','平台','曝光人数','进店人数','下单人数']])
+    df_jd.to_excel(new_filename,index = False)
+
+    print('京东数据处理完成！')
+    print('-'*100)
+
+# #------------------------------------------------------------------------------------------------------------- 
+
+def MT(file_dir):
+    
+    new_filename = file_dir + '/MT_result.xlsx'
+
+    file_list = os.listdir(file_dir)
+    print("文件夹中有{}个文件".format(len(file_list)))
+    print('-'*100) 
+
+    new_list=[]
+    n = 0
+
+    for file in file_list:
+        file_path = os.path.join(file_dir,file)
+        print(file_path)
+        f = open(file_path)
+        df_mt = pd.read_csv(f)
+        df_mt['地区'] = file_list[n]
+        n = n + 1
+        new_list.append(df_mt)
+
+    df_mt = pd.concat(new_list)
+    df_mt['地区']=df_mt['地区'].str.strip('.csv')
+    df_mt['平台']='美团'
+    df_mt.rename(columns = {'曝光人数（人）':'曝光人数','入店人数（人）':'进店人数','下单人数（人）':'下单人数'},inplace = True) 
+    df_mt = pd.DataFrame(df_mt[['门店名称','地区','平台','曝光人数','进店人数','下单人数']])
+    df_mt.to_excel(new_filename,index = False)
+
+    print('美团数据处理完成！')
+    print('-'*100)
+    
+    
+#------------------------------------------------------------------------------------------------------------- 
+
+E_dir=r'E:/日常数据/O2O/2020/2020年1月追踪表/周报0116/曝光/饿百/'#填写文件路径
+# JD_dir=r'E:/19年月度资料汇总/12月资料汇总/曝光/京东/'
+MT_dir=r'E:/日常数据/O2O/2020/2020年1月追踪表/周报0116/曝光/美团/'
+
+ELM(E_dir) 
+# JD(JD_dir)
+MT(MT_dir)
