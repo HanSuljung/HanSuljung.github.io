@@ -1,0 +1,194 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*
+ 
+import pandas as pd
+import os
+import numpy as np
+ 
+ 
+def ELM(Efile_dir):
+    
+    Enew_filename = Efile_dir + '/E_result.xlsx'
+    Efile_list = os.listdir(Efile_dir)
+    print("文件夹中有{}个文件".format(len(Efile_list)))
+    print('-'*100) 
+ 
+    E_list=[]
+    E = 0
+ 
+    for file in Efile_list:
+        file_path = os.path.join(Efile_dir,file)
+        print(file_path)
+ 
+        df_e = pd.read_excel(file_path,sheet_name=0)
+#         df_e['filename'] = Efile_list[E]
+#         print(df_e.head())
+        E = E + 1
+        E_list.append(df_e)
+ 
+    df_E = pd.concat(E_list)
+#     df_E['filename']=df_E['filename'].str.strip('.xlsx')
+    df_E['平台']='饿了么'
+    df_E['营业额']= df_E['总成交额(元)']-df_E['配送费']
+ 
+    df_E1 = pd.DataFrame(df_E[['日期','门店名称','门店ID','城市名','平台','有效订单','营业额']])
+    df_E1['订单类型']='有效订单'
+    df_E1.rename(columns = {'日期':'时间','有效订单':'单数','门店ID':'店铺ID','城市名':'地区','营业额':'金额'},inplace = True)
+ 
+    df_E2= pd.DataFrame(df_E[['日期','门店名称','门店ID','城市名','平台','无效订单','无效订单预计损失(元)']])
+    df_E2['订单类型']='无效订单'
+    df_E2.rename(columns = {'日期':'时间','无效订单':'单数','门店ID':'店铺ID','城市名':'地区','无效订单预计损失(元)':'金额'},inplace = True)
+ 
+    df_E = pd.concat([df_E1,df_E2])
+    df_E = pd.DataFrame(df_E[['时间','门店名称','店铺ID','地区','平台','订单类型','单数','金额']])
+    df_E = df_E[~df_E['单数'].isin([0])]
+    df_E = df_E.sort_values(by = '单数',axis = 0,ascending = True)
+    df_E.reset_index(drop = True,inplace = True)
+    df_E.to_excel(Enew_filename,index = False)
+    print('饿了么数据处理完毕！')
+    print('-'*100)
+    
+ #-------------------------------------------------------------------------------------------------------------   
+    
+def JD(file_dir):
+    
+    new_filename = file_dir + '/JD_result.xlsx'
+ 
+    file_list = os.listdir(file_dir)
+    print("文件夹中有{}个文件".format(len(file_list)))
+    print('-'*100) 
+ 
+    new_list=[]
+    n = 0
+ 
+    for file in file_list:
+        file_path = os.path.join(file_dir,file)
+        print(file_path)
+ 
+        df_jd = pd.read_excel(file_path,sheet_name=0)
+        df_jd['filename'] = file_list[n]
+        n = n + 1
+        new_list.append(df_jd)
+ 
+    df_jd = pd.concat(new_list)
+    df_jd['filename']=df_jd['filename'].str.strip('.xlsx')
+    df_jd['平台']='京东到家'
+    df_jd1=pd.DataFrame(df_jd[['成交时间','门店名称','filename','订单状态','平台','订单编号','订单总金额']])
+    df_jd2=pd.pivot_table(df_jd1,index=["成交时间","门店名称","filename","订单状态","平台"],values=["订单编号","订单总金额"],aggfunc=[len,np.sum])
+    
+    col=[]
+ 
+    for i in df_jd2.columns:
+        i = list(i)
+        i[1] = str(i[1])
+        col.append(''.join(i))
+        
+    df_jd2.columns = col
+    df_jd = df_jd2.reset_index()
+    df_jd = pd.DataFrame(df_jd[['成交时间','门店名称','filename','订单状态','平台','len订单编号','sum订单总金额']])
+    df_jd.rename(columns = {'成交时间':'时间','filename':'地区','len订单编号':'单数','订单状态':'订单类型','sum订单总金额':'金额'},inplace=True)
+    df_jd=pd.DataFrame(df_jd[['时间','门店名称','地区','订单类型','平台','单数','金额']])
+    df_jd['时间']=df_jd['时间'].apply(pd.to_datetime,format='%Y/%m/%d')
+    df_jd['时间'] = df_jd['时间'].dt.date
+    df_jd.to_excel(new_filename,index = False)
+ 
+    print('京东数据处理完成！')
+    print('-'*100)
+ 
+#------------------------------------------------------------------------------------------------------------- 
+ 
+def MT(file_dir,file_name):
+    
+    new_filename = file_dir + '/MT_result.xlsx'
+    df_M = pd.read_excel(file_dir+file_name,sheet_name=0)
+    print("文件夹中有1个文件")
+    print('-'*100) 
+    print('{}{}'.format(file_dir,file_name))
+ 
+    
+    df_M=pd.DataFrame(df_M[['下单时间','店铺名称','店铺ID','店铺所在城市','订单状态','订单编号','订单总金额','配送费']])
+    df_M['金额']=df_M['订单总金额']-df_M['配送费']
+    df_M['下单时间']=df_M['下单时间'].map(str.strip)#替换制表符
+    df_M['店铺名称']=df_M['店铺名称'].map(str.strip)
+    df_M['店铺所在城市']=df_M['店铺所在城市'].map(str.strip)
+    df_M=df_M.drop(['订单总金额','配送费'],axis=1)
+    df_M['下单时间']=df_M['下单时间'].apply(pd.to_datetime,format='%Y/%m/%d')
+    df_M['下单时间']=df_M['下单时间'].dt.date
+    df_M = df_M.drop_duplicates(["订单编号"],keep="last")
+#     print(df_M.head())
+    df_M = pd.pivot_table(df_M,index=["下单时间","店铺名称","店铺ID","店铺所在城市","订单状态"],values=["订单编号","金额"],aggfunc=[len,np.sum])
+    
+    col=[]
+    for i in df_M.columns:
+        i = list(i)
+        i[1]=str(i[1])
+        col.append(''.join(i))
+ 
+    df_M.columns =col
+    df_M = df_M.reset_index()
+    df_M=pd.DataFrame(df_M[['下单时间','店铺名称','店铺ID','店铺所在城市','订单状态','len订单编号','sum金额']])
+    df_M.columns = ['时间','门店名称','店铺ID','地区','订单类型','单数','金额']
+    df_M['平台']='美团'
+    df_M=pd.DataFrame(df_M[['时间','门店名称','店铺ID','地区','订单类型','平台','单数','金额']])
+    df_M.to_excel(new_filename,index = False)
+    print('美团数据处理完成')
+    print('-'*100)
+    
+    
+#------------------------------------------------------------------------------------------------------------- 
+ 
+E_dir=r'E:/日常数据/O2O/2020/2020年4月追踪表/每日数据/0423/饿百/'#填写文件路径
+# JD_dir=r'E:/日常数据/O2O/2019/2019年12月追踪表/每日数据/20191231/京东/'
+MT_dir=r'E:/日常数据/O2O/2020/2020年4月追踪表/每日数据/0423/美团/'
+MT_filename='/美团0423.xlsx'
+ 
+ELM(E_dir) 
+# JD(JD_dir)
+MT(MT_dir,MT_filename)
+ 
+ 
+ 
+df_E=pd.read_excel(E_dir+'/E_result.xlsx')
+# df_JD=pd.read_excel(JD_dir+'/JD_result.xlsx')
+df_MT=pd.read_excel(MT_dir+'/Mt_result.xlsx')
+df = pd.concat([df_E,df_MT])
+df=pd.DataFrame(df[['时间','门店名称','店铺ID','地区','订单类型','平台','单数','金额']])
+ 
+df = df.sort_values(by = '单数',axis = 0,ascending = True)
+df.reset_index(drop = True,inplace = True)
+df.to_excel(E_dir+'/total.xlsx',index = False)
+print('三平台数据汇总完毕！！！')
+ 
+ 
+def 匹配六位店号(path_1,file_1,path_2,file_2):
+    
+    df1 = pd.read_excel(path_1+file_1)
+    df2 = pd.read_excel(path_2+file_2)
+    
+    df1['门店名称'] = df1['门店名称'].str.lstrip('全家便利店')
+    df1['门店名称'] = df1['门店名称'].str.lstrip('全家便利')
+    df1['门店名称'] = df1['门店名称'].str.lstrip('全家')
+    df1['门店名称'] = df1['门店名称'].str.strip('()')
+    df1['门店名称'] = df1['门店名称'].str.strip('（）')
+    df1['门店名称'] = df1['门店名称'].str.lstrip('-')
+    
+    df1.loc[df1['订单类型']=='订单完成','订单类型']='有效订单'
+    df1.loc[df1['订单类型']=='订单已处理','订单类型']='有效订单'
+    df1.loc[df1['订单类型']=='订单取消','订单类型']='无效订单'
+    
+    df = pd.merge(df1,df2.loc[:,['店铺ID','六位店号']],how = 'left',on = '店铺ID')
+    
+    df.to_excel(path_1+'/total_result.xlsx',index = False)
+    print('店号处理完毕！！')
+    
+    
+#-----------------------------------------------------------------------------------------------------  
+ 
+path_1 = E_dir
+file_1 ='/total.xlsx'
+path_2 = r'E:/日常数据/O2O/2020/基础表构建/ID对应关系持续更新/'
+file_2 = '/ID对应表（需更新）.xlsx'
+ 
+匹配六位店号(path_1,file_1,path_2,file_2)
+    
+ 
