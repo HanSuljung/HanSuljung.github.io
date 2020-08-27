@@ -1,0 +1,113 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*
+
+import pandas as pd
+import os
+import numpy as np
+import datetime
+
+'''
+Hansul:
+
+      读取饿百的文件存储路径，并将该路径下的所有文件拼接成一个文件
+
+'''
+
+
+def ELM(Efile_dir):
+    
+    Enew_filename = Efile_dir + '/饿百评价数据.xlsx'
+
+    Efile_list = os.listdir(Efile_dir)
+    print("文件夹中有{}个文件".format(len(Efile_list)))
+    print('-'*100) 
+
+    E_list=[]
+    E = 0
+
+    for file in Efile_list:
+        file_path = os.path.join(Efile_dir,file)
+        print(file_path)
+
+        df_e = pd.read_excel(file_path,sheet_name=0)
+#         df_e['地区'] = Efile_list[E]
+#         print(df_e.head())
+        E = E + 1
+        E_list.append(df_e)
+
+    df_E = pd.concat(E_list)
+    df_E['地区']=df_E['城市信息'].str.strip('市')
+    df_E['渠道']='饿了么'
+
+    df_E.reset_index(drop = True,inplace = True)
+    df_E.to_excel(Enew_filename,index = False)
+    print('饿了么数据处理完毕！')
+    print('-'*100)
+
+#  基础数据汇总   
+
+#--------------------------------------------------------------------------------------------------------
+
+#修改文件存储路径
+    
+E_dir=r'E:/桌面文件夹/作业/作业50-舆情分析看板学习/0820/饿百/'#填写饿百文件路径
+ELM(E_dir) 
+
+MT_dir = r'E:/桌面文件夹/作业/作业50-舆情分析看板学习/0820/美团/'#填写美团文件路径
+file_name='/美团评价.xlsx'#填写美团文件名称
+
+score_id = r'E:/2.日常数据/1.O2O/2020/基础表构建/ID对应关系持续更新/ID对应表（需更新）.xlsx'#填写文件路径
+
+# --------------------------------------------------------------------------------------------------------
+
+# 处理饿百数据
+
+df = pd.read_excel(E_dir+'/饿百评价数据.xlsx')
+
+df['饿百订单编号(匿名评价不展示)'] = df['饿了么订单编号']#增加‘饿百订单编号(匿名评价不展示)’字段
+df['差评发券'] = ''
+df['发券时间'] = ''
+df['顾客隐私号'] = ''
+df['隐私号失效时间'] = ''
+df['差评商品'] = ''
+df['推荐商品'] = ''
+# df['用户评价日期'] = df['用户评价时间']
+
+res = pd.DataFrame((x.split(' ') for x in df['用户评价时间']),index = df.index,columns=['date_left','time_right'])
+
+df_merge = pd.merge(df,res,left_index=True,right_index=True)
+
+df_merge.rename(columns = {'用户评价时间':'时间','date_left':'用户评价日期','time_right':'用户评价时间',\
+                          '饿了么订单编号':'饿了么订单编号(匿名评价不展示)'},inplace =True)
+
+df_re = pd.DataFrame(df_merge[['饿百订单编号(匿名评价不展示)','饿了么订单编号(匿名评价不展示)','商户名称','地区',\
+                               '评价类型','订单评分','评价人','味道评分','包装评分','配送服务评分','送餐时长',\
+                              '用户评价内容','用户评价时间','回复状态','商户回复内容','商户回复时间','订单商品',\
+                              '推荐商品','差评商品','渠道','差评发券','发券时间','顾客隐私号','隐私号失效时间','用户评价日期']])
+
+df_re.to_excel(E_dir+'饿百评价传观远平台版本.xlsx',index = False)
+print('第二步数据处理完毕！！！\n'+'-'*100)
+
+# --------------------------------------------------------------------------------------------------------
+
+# 处理美团数据
+
+df_m = pd.read_excel(MT_dir+file_name)
+df_s =pd.read_excel(score_id)
+
+df_m=pd.merge(df_m,df_s.loc[:,['店铺ID','六位店号']],how = 'left',on = '店铺ID')
+
+df_m.rename(columns={'六位店号':'店号'},inplace = True)
+df_m['订单编号']=['%i ' % i for i in df_m['订单编号']]
+
+df_re = pd.DataFrame(df_m[['店号','包装评分','订单商品','评价提交日期','店铺名称','店铺ID','店铺所在城市','订单编号','下单时间',\
+                          '订单总金额（元）','订单折扣后金额（元）','用户评价','用户追评','用户追评时间','商家回复',\
+                          '商家回复时间','商家评分','质量评分','配送评分','订单商品点踩率（%）','是否部分退款商品',\
+                          '评价提交时间']])
+
+
+df_re.to_excel(MT_dir+'\美团评价传观远平台版本.xlsx',index = False)
+
+print('美团数据处理完毕！！！\n'+'-'*100)
+
+
