@@ -1,0 +1,236 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*
+
+import pandas as pd
+import os
+import numpy as np
+import time,datetime
+
+
+def DZEB(path_E):
+    
+    file_list1 = os.listdir(path_E)
+    #定义一个列表，用来存储路径下的所有文件名称
+    
+    print("饿百账单文件夹中有{}个文件".format(len(file_list1)))
+    print('-'*100)
+    
+    
+    E_inputlist = []#定义一个空列表用来放读取文件de明细
+    
+    
+    
+    for file in file_list1:
+        
+        file_path = os.path.join(path_E,file)  #把路径饿百文件夹与其文件拼接在一起
+        print(file_path)
+        
+        df= pd.read_excel(file_path,sheet_name=0)#read data
+#         print(df_e.head())
+
+        E_inputlist.append(df)
+        
+        
+    df_total = pd.concat(E_inputlist)
+#     print(df_total.head())
+
+#         """
+        
+#         开始切片--定义：
+        
+#                   df_1是正向单，
+#                   df_2是部分退，
+#                   df_3是取消单。
+                  
+#         """
+      
+    df_1 = pd.DataFrame(df_total[df_total['业务类型']=='正向单'])
+    df_2 = pd.DataFrame(df_total[df_total['业务类型']=='部分退单'])
+    df_3 = pd.DataFrame(df_total[df_total['业务类型']=='全部退单'])
+    
+#     print(df_1.head())
+#     print(df_2.head())
+#     print(df_3.head())
+    df_1['business_type(1：正向：2：负向)']= '1'
+    df_2['business_type(1：正向：2：负向)']= '1'
+    df_3['business_type(1：正向：2：负向)']= '2'
+    
+    
+    df_positive = pd.concat([df_1,df_2])
+    df_negative = df_3
+    
+#     print(df_positive.head())
+#     print(df_negative.head())
+    
+    
+    df_positive_1 = df_positive.drop_duplicates(subset = ['饿了么订单号'], keep='last',inplace=False)
+    
+    df_total = pd.concat([df_positive_1,df_negative])
+     
+    df_total = df_total.drop_duplicates(subset = ['饿了么订单号'], keep='last',inplace=False)
+#     print(df_total.head())
+    date_list = []
+    
+    
+    
+    df_total['时间']=df_total['订单创建时间'].astype("M8[D]")
+    
+    start_date = min(df_total['时间'])
+    end_date = max(df_total['时间'])
+   
+    date_span = (end_date-start_date).days
+    
+    if date_span<=7:
+        
+        print("date_span is smaller than 7 days.")
+        
+        
+    else:
+        
+        start_labels=[x[:] for x in pd.date_range(start_date,end_date,freq='D').astype(np.str)][0::7]
+        end_labels =[x[:] for x in pd.date_range(start_date,end_date,freq='D').astype(np.str)][6::7]
+        
+        x=[x[:] for x in pd.date_range(start_date,end_date,freq='D').astype(np.str)][:]
+        n = len(x)
+
+        if(x[n-1] not in end_labels ):
+            
+            end_labels.append(x[n-1])
+            
+        print('-'*100)       
+        print('输出文件开始:')
+            
+        for t in range(len(start_labels)):
+        
+            df_cut=df_total[(df_total['时间']>=start_labels[t])&(df_total['时间']<=end_labels[t])]
+            df_cut['星选订单号']=df_cut['星选订单号'].astype(np.str)
+#             df_cut['饿了么订单号']=df_cut['饿了么订单号'].astype(np.str)
+            df_cut['channel']='207'
+            df_cut1 = pd.DataFrame(df_cut[['星选订单号','订单创建时间','六位店号','channel','business_type(1：正向：2：负向)']])
+            df_cut1.rename(columns = {'星选订单号':'order_id','订单创建时间':'order_time','六位店号':'store_id'},inplace=True)
+            df_cut1['order_id']=df_cut1['order_id'].astype(np.str)
+            df_cut1['refund_id']=''
+            new_filename=path_E+start_labels[t]+'至'+end_labels[t]+'饿百账单.xlsx'
+
+            df_cut1.to_excel(new_filename,index=False)
+            print(new_filename)
+            print('-'*100)
+        
+    print('饿百文件处理完成！！！')
+    print('-'*100)
+    
+    
+    
+    
+    
+    
+#------------------------------------------------------------------------------------------------   
+
+def DZMT(path_M):
+    
+    file_list2 = os.listdir(path_M)
+    #定义一个列表，用来存储路径下的所有文件名称
+    print("美团账单文件夹中有{}个文件".format(len(file_list2)))
+    print('-'*100)
+    
+    M_inputlist = []#定义一个空列表用来放读取文件de明细
+    
+    
+    
+    for file in file_list2:
+        
+        file_path_M = os.path.join(path_M,file)  #把路径文件夹与其文件拼接在一起
+        print(file_path_M)
+        
+        df_m = pd.read_excel(file_path_M,sheet_name=0)#read data
+#         print(df_m.head())
+
+        M_inputlist.append(df_m)
+        
+        
+    df_total_m = pd.concat(M_inputlist)
+#     print(df_total_m.head(5))
+     
+    df_m1 = pd.DataFrame(df_total_m[df_total_m['订单状态']=='订单完成'])
+#     print(df_m1.head(5))
+    df_m2 = pd.DataFrame(df_total_m[df_total_m['订单状态']=='订单取消'])
+#     print(df_m2.head(5))
+ 
+    
+#     print(df_1.head())
+#     print(df_2.head())
+#     print(df_3.head())
+    df_m1['business_type(1：正向：2：负向)']= '1'
+    df_m2['business_type(1：正向：2：负向)']= '2'
+  
+    
+    
+    df_positive_m = df_m1
+    df_negative_m = df_m2
+    
+#     print(df_positive.head())
+#     print(df_negative.head())
+    
+    
+    
+    df_total_m = pd.concat([df_positive_m,df_negative_m])
+     
+    df_total_m = df_total_m.drop_duplicates(subset = ['订单号'], keep='last',inplace=False)
+#     print(df_total.head())
+#     date_list_m = []
+    
+    
+    
+    df_total_m['时间']=df_total_m['下单时间'].astype("M8[D]")
+    
+    start_date_m = min(df_total_m['时间'])
+    end_date_m = max(df_total_m['时间'])
+   
+    date_span_m = (end_date_m-start_date_m).days
+    
+    if date_span_m<=7:
+        
+        print("date_span is smaller than 7 days.")
+        
+        
+    else:
+        
+        start_labels_m=[x[:] for x in pd.date_range(start_date_m,end_date_m,freq='D').astype(np.str)][0::7]
+        end_labels_m =[x[:] for x in pd.date_range(start_date_m,end_date_m,freq='D').astype(np.str)][6::7]
+        
+        x=[x[:] for x in pd.date_range(start_date_m,end_date_m,freq='D').astype(np.str)][:]
+        n = len(x)
+
+        if(x[n-1] not in end_labels_m ):
+            
+            end_labels_m.append(x[n-1])
+            
+        print('-'*100)       
+        print('输出文件开始:')
+            
+        for t in range(len(start_labels_m)):
+        
+            df_cut=df_total_m[(df_total_m['时间']>=start_labels_m[t])&(df_total_m['时间']<=end_labels_m[t])]
+            
+            df_cut['channel']='205'
+            df_cut1 = pd.DataFrame(df_cut[['订单号','下单时间','六位店号','channel','business_type(1：正向：2：负向)']])
+            df_cut1.rename(columns = {'订单号':'order_id','下单时间':'order_time','六位店号':'store_id'},inplace=True)
+            df_cut1['order_id']=df_cut1['order_id'].astype(np.str)
+            df_cut1['refund_id']=''
+            
+            new_filename_m=path_M+start_labels_m[t]+'至'+end_labels_m[t]+'美团账单.xlsx'
+
+            df_cut1.to_excel(new_filename_m,index=False)
+            print(new_filename_m)
+            print('-'*100)
+        
+    print('美团文件处理完成！！！')
+    print('-'*100)
+    
+    
+path_E= r'E:/桌面文件夹/作业/作业65-中台对账/10月26/饿百/饿百/'    
+path_M= r'E:/桌面文件夹/作业/作业65-中台对账/10月26/美团/美团/'
+
+
+DZEB(path_E)  
+DZMT(path_M)     
