@@ -1,0 +1,45 @@
+#!/usr/bin/python
+
+# -*- coding: UTF-8 -*
+
+import xlrd
+import requests
+import numpy as np
+import pandas as pd
+import os
+
+path = r'E:\\全家数据\\菜单图片\\'
+
+
+file_list = os.listdir(path)
+print("文件夹中有{}个文件".format(len(file_list)))
+input_list = []
+for file in file_list:
+    file_path = os.path.join(path,file)
+    print(file_path)
+    df = pd.read_excel(file_path,sheet_name=0,converters = {u'7位货号':str,u'8位货号':str})
+    df['7位货号']=df['7位货号'].astype(np.str)
+#     print(df.head(5))
+    input_list.append(df)
+
+df_total = pd.concat(input_list)
+# print(df_total.head(5))
+
+for i in range(len(df_total['菜单名'])):
+    category1= df_total['一级分类名'][i]
+    category2= df_total['二级分类名'][i]
+    dirs_1=path+category1+'\\'
+    dirs_2=dirs_1+category2+'\\'
+    if not os.path.exists(dirs_1):
+        os.makedirs(dirs_1)
+    if not os.path.exists(dirs_2):
+        os.makedirs(dirs_2)
+    
+    url = df_total['图片'][i]
+    name = df_total['7位货号'][i]
+    f = requests.get(url)
+    pic_name = dirs_2+name+'.jpg'
+    with open(pic_name,"wb") as code:
+        code.write(f.content)
+
+print("图片处理完成，请查看！")
