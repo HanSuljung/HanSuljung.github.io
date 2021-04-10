@@ -1,0 +1,13 @@
+--sqlzoo 练习
+/%name:國家名稱
+continent:洲份
+area:面積
+population:人口
+gdp:國內生產總值%/
+
+--1.顯示德國 Germany 的人口
+
+SELECT population 
+FROM world
+WHERE name = 'Germany';
+
