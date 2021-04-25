@@ -1,0 +1,140 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*
+
+import pandas as pd
+import os
+import numpy as np
+
+
+def ELM(Efile_dir):
+    
+    df_P = pd.read_excel(r'E:/2.日常数据/1.O2O/2021/基础表构建/ID对应关系持续更新/ID对应表（需更新）.xlsx')
+    
+    
+    
+    Enew_filename = Efile_dir + '/2021年饿百账单.xlsx'
+
+    Efile_list = os.listdir(Efile_dir)
+    print("文件夹中有{}个文件".format(len(Efile_list)))
+    print('-'*100) 
+
+    E_list=[]
+    E = 0
+
+    for file in Efile_list:
+        file_path = os.path.join(Efile_dir,file)
+        print(file_path)
+
+        df_e = pd.read_excel(file_path,sheet_name=0)
+        js = sum(df_e['结算金额'])
+        print(js)
+        df_e['地区'] = Efile_list[E]
+#         print(df_e.head())
+        E = E + 1
+        E_list.append(df_e)
+
+    df_E = pd.concat(E_list)
+    df_E['地区']=df_E['地区'].str.strip('.xlsx')
+    df_E['平台']='饿了么'
+#     df_E['星选订单号']=df_E['星选订单号'].astype(np.int64)
+#     df_E['星选订单号']=['%i ' % i for i in df_E['星选订单号']]
+#     df_E['饿了么订单号']=df_E['饿了么订单号'].astype(np.int64)
+    df_E['饿了么订单号']=['%i ' % i for i in df_E['饿了么订单号']]
+    df_E.rename(columns = {'商户ID':'店铺ID'},inplace = True)
+    
+    df_1 = pd.merge(df_E,df_P.loc[:,['店铺ID','六位店号']],how = 'left',on = '店铺ID')
+    df_1.rename(columns = {'店铺ID':'商户ID'},inplace = True)
+    df_1['星选订单号']=df_1['星选订单号'].astype(np.str)
+    df_1['饿了么订单号']=df_1['饿了么订单号'].astype(np.str)
+    
+    df_1.to_excel(Enew_filename,index = False)
+    print('饿了么数据处理完毕！')
+    print('-'*100)
+    
+ #-------------------------------------------------------------------------------------------------------------   
+    
+# def JD(file_dir):
+    
+#     new_filename = file_dir + '/JD_result.xlsx'
+
+#     file_list = os.listdir(file_dir)
+#     print("文件夹中有{}个文件".format(len(file_list)))
+#     print('-'*100) 
+
+#     new_list=[]
+#     n = 0
+
+#     for file in file_list:
+#         file_path = os.path.join(file_dir,file)
+#         print(file_path)
+
+#         df_jd = pd.read_excel(file_path,sheet_name='第1页')
+#         df_jd['地区'] = file_list[n]
+#         n = n + 1
+#         new_list.append(df_jd)
+
+#     df_jd = pd.concat(new_list)
+#     df_jd['地区']=df_jd['地区'].str.strip('.xlsx')
+#     df_jd['平台']='京东到家'
+#     df_jd = pd.DataFrame(df_jd[['商家id','商家名称','门店id','门店名称','地区','订单号','订单类型','下单时间','完成时间','应结金额','用户支付货款','订单原价','总补贴(平台+商家承担补贴)','平台承担补贴(市场费)','商家承担补贴(货款+运费)','商家承担货款补贴','商家承担运费补贴','商家自送配送费','总佣金(货款佣金+运费佣金+餐盒费佣金)(可开票)','取件服务费(开票)(正向单展示远距离运费;售后单则展示达达售后运费)','商家承担小费','餐盒费','账期','结算单号','结算单状态','结算完成时间','订单序号','关联单号','配送方式','收付款单号','礼品卡费用','订单渠道','用户支付方式','线下收款应结','对账单业务类型','调账原因','平台']])
+#     df_jd['订单号']=df_jd['订单号'].astype(np.int64)
+#     df_jd['订单号']=[' %i' % i for i in df_jd['订单号']]
+#     df_jd['关联单号']=df_jd['关联单号'].astype(np.int64)
+#     df_jd['关联单号']=[' %i' % i for i in df_jd['关联单号']]
+    
+#     df_jd.to_excel(new_filename,index = False)
+
+#     print('京东数据处理完成！')
+#     print('-'*100)
+
+# #------------------------------------------------------------------------------------------------------------- 
+
+def MT(file_dir):
+    
+    df_P = pd.read_excel(r'E:/2.日常数据/1.O2O/2021/基础表构建/ID对应关系持续更新/ID对应表（需更新）.xlsx')
+    
+    
+    new_filename = file_dir + '/2021年美团账单.xlsx'
+
+    file_list = os.listdir(file_dir)
+    print("文件夹中有{}个文件".format(len(file_list)))
+    print('-'*100) 
+
+    new_list=[]
+    n = 0
+
+    for file in file_list:
+        file_path = os.path.join(file_dir,file)
+        print(file_path)
+        df_mt = pd.read_excel(file_path)
+        df_mt['地区'] = file_list[n]
+        js = sum(df_mt['商家应收款'])
+        print(js)
+        n = n + 1
+        new_list.append(df_mt)
+
+    df_mt = pd.concat(new_list)
+    df_mt['地区']=df_mt['地区'].str.strip('.xlsx')
+    df_mt['平台']='美团'
+    
+#     df_mt['订单号']=df_mt['订单号'].astype(np.int64)
+#     df_mt['订单号']=['%i ' % i for i in df_mt['订单号']]
+    df_mt.rename(columns = {'门店id':'店铺ID'},inplace = True)
+    
+    df_2 = pd.merge(df_mt,df_P.loc[:,['店铺ID','六位店号']],how = 'left',on = '店铺ID')
+    df_2.rename(columns = {'店铺ID':'门店id'},inplace = True)
+    df_2['订单号']=df_2['订单号'].astype(np.str)
+    df_2.to_excel(new_filename,index = False)
+
+    print('美团数据处理完成！')
+    print('-'*100)
+    
+    
+#------------------------------------------------------------------------------------------------------------- 
+# 
+E_dir=r'E:\\7.2021月度资料\\2021年3月\\账单\\饿百更新\\'#填写文件路径
+# JD_dir=r''
+# MT_dir=r'E:\\2.日常数据\\3.账单\\20210415\\美团\\'
+ELM(E_dir) 
+# JD(JD_dir)
+# MT(MT_dir)
